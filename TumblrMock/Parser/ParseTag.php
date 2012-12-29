@@ -1,6 +1,7 @@
 <?php
 namespace TumblrMock\Parser;
 use TumblrMock\Parser\Meta;
+use TumblrMock\Parser\TemplateParser;
 
 /**
  * Like blocks but for actual tags.
@@ -35,16 +36,33 @@ class ParseTag extends ParseBlock {
 	 * @var mixed
 	 */
 	public $mod = '';
+	/**
+	 * Custom function.
+	 * Syntax options parsed from the tag $mod
+	 * Implemented later to allow more flexibility in $mods.
+	 * Example: {SomeTag- @opt1=3482 @opt2=string}
+	 * @var Array: Associative
+	 */
 	public $options = array();
 	
-	final public function InitTag($filter, $mod) {
+	/**
+		
+	 */
+	public $fulltagtext = '';
+	
+	final public function InitTag(TemplateParser &$parser, $filter, $mod, $fulltagtext) {
 		$this->filter = $filter;
 		$this->mod = $mod;
-		$this->instantialize();
+		$this->fulltagtext = $fulltagtext;
+		$this->instantialize($parser);
 	}
 	
-	public function instantialize() {
-		
+	/**
+	 * Use this function to tranform tag or attributes
+	 * at parse time
+	 */
+	public function instantialize(TemplateParser &$parser) {
+		return;
 	}
 	
 	/**

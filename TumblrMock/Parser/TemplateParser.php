@@ -22,8 +22,9 @@ class TemplateParser {
 	const BLOCK_FULL_STRING = 0;
 	const BLOCK_TAG_NAME = 2;
 	
-	const RGX_TAG = 
-		'~\{(Plaintext|JS|JSPlaintext|URLEncoded|RGB|)([A-Za-z0-9]+)(\-([^\}]+))?(\})~';
+	const RGX_TAG = //                                        | colon supported for color:Name
+	'~\{(Plaintext|JS|JSPlaintext|URLEncoded|RGB|)([A-Za-z0-9\:]+)(\-([^\}]+))?(\})~';
+		
 	const TAG_FULL_STRING = 0;
 	const TAG_FILTER = 1;
 	const TAG_NAME = 2;
@@ -270,7 +271,7 @@ class TemplateParser {
 			$offset = $EndOfMatch;
 			
 			// Create the actual tag
-			$Tag = $this->NewTag($tagname, $filter, $mod);
+			$Tag = $this->NewTag($tagname, $filter, $mod, $fulltext);
 			$Tag->meta->setFileName($this->CurrentFile());
 			$Tag->meta->setBeginsAt($FirstMatch+$pos_offset, $FirstMatch+$pos_offset);
 			$Tag->meta->setEndsAt($EndOfMatch+$pos_offset, $EndOfMatch+$pos_offset);
@@ -317,17 +318,18 @@ class TemplateParser {
 	 * @param string $tagname
 	 * @param string $filter
 	 * @param string $mod
+	 * @param string $fulltagtext the full tag text including { and }
 	 * @return ParseTag
 	 */
-	private function NewTag($Tagname, $filter, $mod) {
+	private function NewTag($Tagname, $filter, $mod, $fulltagtext) {
 		$tag;
 		if ($this->TagIsValid($Tagname)) {
 			$tagclass = $this->getFullTagName($Tagname);
 			$tag = new $tagclass($Tagname);
 		} else {
-			$tag = new TagNoExist();
+			$tag = new TagNoExist($Tagname);
 		}
-		$tag->InitTag($filter, $mod);
+		$tag->InitTag($this, $filter, $mod, $fulltagtext);
 		return $tag;
 	}
 	
