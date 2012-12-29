@@ -22,6 +22,9 @@ class Context {
 	
 	public $underpost = false;
 	
+	// Any data that needs to be passed-by-context
+	public $extra = array();
+	
 	public function __construct(TemplateTree &$tree, Blog &$blog) {
 		$this->tree = &$tree;
 		$this->blog = &$blog;
