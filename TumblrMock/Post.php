@@ -119,10 +119,19 @@ class Post {
 	public $title = "";
 	public $body = "";
 	
+	/**
+	 * Any attributes that are not explicity set are filtered
+	 * to here
+	 * @var Array: Associative
+	 */
+	public $extradata = array();
+	
 	public function Deserialize($rawpost) {
 		$post = &$this;
 		foreach ( get_object_vars($rawpost) as $var => $val) {
 			if (!property_exists($post, $var)) {
+				// if Post don't have a property then set it
+				$this->extradata[$var] = $val;
 				continue;
 			}
 			$type = gettype($val);
