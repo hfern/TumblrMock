@@ -54,9 +54,13 @@ class Deserializer {
 		$blog->time_updated = $raw->updated;
 		$blog->description = $raw->description;
 		$blog->ask = $raw->ask;
-		$blog->ask_anon = $raw->ask_anon;
+		if(isset($raw->ask_anon)) {
+			$blog->ask_anon = $raw->ask_anon;
+		}
 		$blog->share_likes = $raw->share_likes;
-		$blog->likes = $raw->likes;
+		if (isset($raw->likes)) {
+			$blog->likes = $raw->likes; 
+		}
 		
 		$max_pages = $blog->post_ct / count($this->blob->response->posts);
 		$blog->max_pages = ceil($max_pages);
