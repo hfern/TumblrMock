@@ -1,12 +1,12 @@
 <?php
 namespace TumblrMock\Parser;
 
+use TumblrMock\Blog;
 use TumblrMock\Tags\TagNoExist;
-
-use TumblrMock\Parser\ParseTag;
 use TumblrMock\Blocks\BlockNoExist;
-use TumblrMock\Parser\ParseBlock;
 use TumblrMock\Blocks\PassThru;
+use TumblrMock\Parser\ParseTag;
+use TumblrMock\Parser\ParseBlock;
 use TumblrMock\Parser\TemplateTree;
 
 /**
@@ -59,6 +59,14 @@ class TemplateParser {
 	private $stack;
 	
 	/**
+	 * Block object
+	 * Tags may reference this to extract information such as 
+	 * number of pages
+	 * @var Blog
+	 */
+	private $blog;
+	
+	/**
 	 * Stack of Filepaths relative to parsing
 	 */
 	private $filestack = array();
@@ -68,6 +76,12 @@ class TemplateParser {
 	 * @var Array
 	 */
 	private $filetexts = array();
+	
+	/**
+	 * The page number that's supposedly being rendered
+	 * @var int
+	 */
+	private $pageNo = 1;
 	
 	public function ParseFile($filename) {
 		$this->ParseBlocks($filename);
@@ -301,6 +315,24 @@ class TemplateParser {
 	}
 	
 	/**
+	 * Set reference Blog object that this tree
+	 * will be parsed to
+	 * @param Blog $blog
+	 */
+	public function setBlog(Blog &$blog) {
+		$this->blog = $blog;
+	}
+	
+	/**
+	 * Renders the entire tree into an output document
+	 * @return string:html output
+	 */
+	public function CascadeRender() {
+		$ctx = new Context($this->stack, $this->blog, $this);
+		return $this->stack->tree->render($ctx);
+	}
+	
+	/**
 	 * Check if a node is valid and existant
 	 */
 	private function BlockIsValid($Blockname) {
@@ -438,6 +470,25 @@ class TemplateParser {
 		$this->base_directory = $path;
 	}
 	
+	/**
+	 * @return int
+	 */
+	public function getPageNo() {
+		return $this->pageNo;
+	}
+	
+	/**
+	 * Set the page number that's supposedly being parsed
+	 * @param int $pageNo
+	 */
+	public function setPageNo($pageNo) {
+		$this->pageNo = $pageNo;
+	}
+	
+	/**
+	 * Returns the render stack
+	 * @return TemplateTree
+	 */
 	public function getStack() {
 		return $this->stack;
 	}

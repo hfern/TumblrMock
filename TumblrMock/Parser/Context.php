@@ -1,5 +1,6 @@
 <?php
 namespace TumblrMock\Parser;
+use TumblrMock\Parser\TemplateParser;
 use TumblrMock\Blog;
 use TumblrMock\Parser\TemplateTree;
 
@@ -20,17 +21,20 @@ class Context {
 	 */
 	public $blog;
 	
+	/**
+	 * Parser object for back referencing
+	 * @var TemplateParser
+	 */
+	public $parser;
+	
 	public $underpost = false;
 	
 	// Any data that needs to be passed-by-context
 	public $extra = array();
 	
-	public function __construct(TemplateTree &$tree, Blog &$blog) {
+	public function __construct(TemplateTree &$tree, Blog &$blog, TemplateParser &$parser) {
 		$this->tree = &$tree;
 		$this->blog = &$blog;
-	}
-	
-	public function Render() {
-		
+		$this->parser = &$parser;
 	}
 }
