@@ -89,10 +89,11 @@ class TemplateParser {
 	
 	/**
 	 * parses down the string
+	 * Does not setup tree and is usually called 
 	 * @param string $text
 	 * @param string $filename
 	 */
-	private function ParseBlocks($filename) {
+	public function ParseBlocks($filename) {
 		// enter into requested file
 		$filename = $this->LoadFile($filename);
 		$this->stack->tree->meta->setBeginsAt(0, 0);
@@ -373,11 +374,20 @@ class TemplateParser {
 		return sprintf('TumblrMock\\Tags\\%s', $Tagname);
 	}
 	
-	private function PushFileStack($filename) {
+	public function GetCurrentFile() {
+		if (count($this->filestack) == 0) {
+			return NULL;
+		} else {
+			$ct = count($this->filestack);
+			return $this->filestack[$ct-1];
+		}
+	}
+	
+	public function PushFileStack($filename) {
 		$this->filestack[] = $filename;
 	}
 	
-	private function PopFileStack() {
+	public function PopFileStack() {
 		return array_pop($this->filestack);
 	}
 	

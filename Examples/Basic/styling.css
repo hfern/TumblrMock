@@ -1,0 +1,23 @@
+html, body {
+	background: #EEE;
+}
+.post {
+	border: 1px solid #CCC;	
+	margin: 5px;
+	padding: 5px;
+}
+.chat .even {
+	background: #DDD;	
+}
+
+.quote {
+	font-style: italic;
+	font-size: 1.1em;
+}
+
+.quote .source {
+	font-size: .9em;
+}
+.quote .source:before {
+	content: "--- "	
+}
