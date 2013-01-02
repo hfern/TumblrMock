@@ -18,9 +18,12 @@ class TemplateParser {
 	const ITERATION_MAX = 2000;
 	const TAG_CLOSE = '/';
 	
-	const RGX_BLOCK = '~\{(\/)?block\:([a-zA-Z0-9\_]+)\}~';
+	const RGX_BLOCK = 
+		'~\{(\/)?block\:([a-zA-Z0-9\_]+)((\s+[a-zA-Z0-9]+\="[a-zA-Z0-9\/\.]+")*)(\})~';
 	const BLOCK_FULL_STRING = 0;
+	const BLOCK_TAG_CLOSE = 1;
 	const BLOCK_TAG_NAME = 2;
+	const BLOCK_PARAMS = 3;
 	
 	const RGX_TAG = //                                        | colon supported for color:Name
 	'~\{(Plaintext|JS|JSPlaintext|URLEncoded|RGB|)([A-Za-z0-9\:]+)(\-([^\}]+))?(\})~';
@@ -38,6 +41,11 @@ class TemplateParser {
 	const EXC_TAG_MISMATCH = 10;
 	// attempted to load a file that didn't exist
 	const EXC_FILE_NOT_FOUND = 11;
+	
+	// "...index (post) pages."
+	const PAGE_TYPE_INDEX = 1;
+	// "...post permalink pages."
+	const PAGE_TYPE_PERMALINK = 2;
 	
 	/**
 	 * Highest directory that may be accessed and dir root
@@ -83,6 +91,12 @@ class TemplateParser {
 	 */
 	private $pageNo = 1;
 	
+	/**
+	 * The type of page to be rendered
+	 * @var int: enum(self::PAGE_TYPE_INDEX, self::PAGE_TYPE_PERMALINK)
+	 */
+	private $pagetype = 1;
+	
 	public function ParseFile($filename) {
 		$this->ParseBlocks($filename);
 	}
@@ -123,7 +137,7 @@ class TemplateParser {
 			$offset = $matchAt + strlen($matchedString);
 			
 			// check if precending fwd slash found
-			$isOpeningTag = $match[1] != TemplateParser::TAG_CLOSE;
+			$isOpeningTag = $match[self::BLOCK_TAG_CLOSE] != TemplateParser::TAG_CLOSE;
 			
 			if ($isOpeningTag) {
 				// Opening Tag
@@ -160,7 +174,7 @@ class TemplateParser {
 				
 				// create new node, append to current_node pointer, 
 				// descend & select new node into current_node
-				$node = $this->NewBlock($matchBlockName);
+				$node = $this->NewBlock($matchBlockName, $match[self::BLOCK_PARAMS]);
 				$node->meta->setFileName($this->CurrentFile());
 				$node->meta->setBeginsAt($matchAt, $offset);
 				$this->stack->append($node);
@@ -206,15 +220,16 @@ class TemplateParser {
 						);
 					
 				} else {
-					var_dump($current_node);
-					$errs =  'Error: Tag mismatch! Attempted to close %s (@ Line %s, Col.%s) '
-							.'while %s (@ Line %s, Col.%s) still open!';
+					//var_dump($current_node);
+					$errs =  'Error: Tag mismatch! Attempted to close %s at %s (Line %s, Col. %s) '
+							.'while %s (Line %s, Col. %s) still open!';
 					$fmtd = sprintf($errs, $matchBlockName, 
+						$this->getPrettyFName($this->CurrentFile()),
 						$this->linen($matchAt), $this->coln($matchAt),
 						$current_node->tagname, 
 						$this->linen($current_node->meta->pos_begin_begin), 
 						$this->coln($current_node->meta->pos_begin_begin));
-					throw new Exception($fmtd, self::EXC_TAG_MISMATCH);
+					throw new \Exception($fmtd, self::EXC_TAG_MISMATCH);
 				}
 			
 			} // END closing tag
@@ -307,12 +322,33 @@ class TemplateParser {
 		return $Nodes;
 	}
 	
-	private function NewBlock($Blockname) {
+	/**
+	 * Reduces full path of file to file-basepath for more readability
+	 * @param string $filename
+	 * @return string readable filename
+	 */
+	private function getPrettyFName($filename) {
+		if (strpos($filename, $this->base_directory) === 0) {
+			return substr($filename, strlen($this->base_directory)+1);
+		}
+		return $filename;
+	}
+	
+	/**
+	 * Creates and returns a new block
+	 * @param string $Blockname
+	 * @param string $params
+	 */
+	private function NewBlock($Blockname, $params = '') {
+		$block;
 		if($this->BlockIsValid($Blockname)) {
 			$name = $this->getFullBlockName($Blockname);
-			return new $name($Blockname);
+			$block = new $name($Blockname);
+		} else {
+			$block = new BlockNoExist($Blockname);
 		}
-		return new BlockNoExist($Blockname);
+		$block->setParams($params);
+		return $block;
 	}
 	
 	/**
@@ -416,7 +452,7 @@ class TemplateParser {
 	 * @return int
 	 */
 	private function coln ($offset, $filename = NULL) {
-		if ($filename = NULL) {
+		if ($filename == NULL) {
 			$filename = $this->CurrentFile();
 		}
 		$txt = substr($this->filetexts[$filename], 0, $offset);
@@ -431,7 +467,7 @@ class TemplateParser {
 	 * @return int
 	 */
 	private function linen ($offset, $filename = NULL) {
-		if ($filename = NULL) {
+		if ($filename == NULL) {
 			$filename = $this->CurrentFile();
 		}
 		$txt = substr($this->filetexts[$filename], 0, $offset);
@@ -501,6 +537,26 @@ class TemplateParser {
 	 */
 	public function getStack() {
 		return $this->stack;
+	}
+	
+	/**
+	 * Get how the page is being parsed/rendered as
+	 * @return int
+	 */
+	public function getPageType() {
+		return $this->pagetype;
+	}
+	
+	/**
+	 * Gives blocks options to modify based on parse enviroment as well
+	 * as affecting how a block is rendered. This should be set
+	 * depending on how the page is going to be presented (as a list of 
+	 * posts or as a single, permalinked post).
+	 * One of self::PAGE_TYPE_INDEX, self::PAGE_TYPE_PERMALINK.
+	 * @param int $type
+	 */
+	public function setPageType($type) {
+		$this->pagetype = $type;
 	}
 	
 }

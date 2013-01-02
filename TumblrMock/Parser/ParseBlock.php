@@ -9,6 +9,9 @@ use TumblrMock\Parser\Context;
  * @author Hunt
  */
 class ParseBlock {
+	
+	const RGX_PARAMS = '~([a-zA-Z0-9]+)\="([a-zA-Z0-9\/\.]+)"~';
+	
 	/**
 	 * A reference back to the tree
 	 * @var TemplateTree
@@ -31,6 +34,12 @@ class ParseBlock {
 	
 	public $children = array();
 	
+	/**
+	 * Assoc array of any params passed to the block
+	 * @var Array
+	 */
+	public $params = array();
+	
 	public function __construct($name='') {
 		$this->tagname = $name;
 		$this->meta = new Meta();
@@ -42,5 +51,20 @@ class ParseBlock {
 			$str.= $child->render($ctx);
 		}
 		return $str;
+	}
+	
+	/**
+	 * Sets the block's parameters
+	 * @param string $paramstring
+	 */
+	public function setParams($paramstring) {
+		if (trim($paramstring) == '') {
+			return;
+		}
+		preg_match_all(self::RGX_PARAMS, $paramstring, $matches);
+		foreach($matches[0] as $index => $_) {
+			$this->params[$matches[1][$index]] = $matches[2][$index];
+		}
+		return;
 	}
 }

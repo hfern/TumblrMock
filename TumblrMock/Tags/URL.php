@@ -1,5 +1,7 @@
 <?php
 namespace TumblrMock\Tags;
+use TumblrMock\Blocks\JumpPagination;
+
 use TumblrMock\Parser\ParseTag;
 
 /**
@@ -12,7 +14,9 @@ class URL extends ParseTag {
 		if ($ctx->underpost && $ctx->activepost->type == 'link') {
 			return $this->LinkPostsContext($ctx);
 		}
-		
+		if (JumpPagination::IsUnder($ctx)) {
+			return $this->JumpPaginationContext($ctx);
+		}
 		return '';
 	}
 	
@@ -24,7 +28,11 @@ class URL extends ParseTag {
 		return $ctx->activepost->extradata['url'];
 	}
 	
-	private function JumpPaginationContext () {
-		
+	private function JumpPaginationContext ($ctx) {
+		if (!isset($ctx->extra['paginationpage'])) {
+			return '';
+		}
+		$page = $ctx->extra['paginationpage'];
+		return sprintf('%spage/%s', $ctx->blog->url, $page);
 	}
 }
