@@ -19,10 +19,12 @@ class Import extends ParseTag {
 		return $output;
 	}
 	public function instantialize($parser) {
-		//var_dump($this->mod); die;
-		$parser->getStack()->append($this);
-		$parser->ParseFile($this->mod);
-		$parser->getStack()->climb();
+		if(!array_key_exists('file', $this->options)) {
+			return;
+		}
+		$parser->getStack()->append($this); // jump into a new node structure
+		$parser->ParseFile($this->options['file']);
+		$parser->getStack()->climb(); // climb back out of the file root
 		return;
 	}
 }

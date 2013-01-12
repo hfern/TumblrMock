@@ -26,12 +26,12 @@ class TemplateParser {
 	const BLOCK_PARAMS = 3;
 	
 	const RGX_TAG = //                                        | colon supported for color:Name
-	'~\{(Plaintext|JS|JSPlaintext|URLEncoded|RGB|)([A-Za-z0-9\:]+)(\-([^\}]+))?(\})~';
+	'~\{(Plaintext|JS|JSPlaintext|URLEncoded|RGB|)([A-Za-z0-9\:]+)(\-([^\}]+)|(\s+[a-zA-Z0-9]+\="[^"]+")+\s*)?(\})~';
 		
 	const TAG_FULL_STRING = 0;
 	const TAG_FILTER = 1;
 	const TAG_NAME = 2;
-	const TAG_MOD = 4;
+	const TAG_MOD = 3;
 	
 	const RGX_META_BASE = '~\<meta((\s+[a-zA-Z0-9]+\=\"[^\"]+\")+)\s*\/\>~';
 	const META_B_FULL_STRING = 0;

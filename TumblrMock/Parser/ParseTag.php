@@ -27,12 +27,13 @@ class ParseTag extends ParseBlock {
 	 * 				$mod = 100
 	 * 			{PhotoWidth-100sq}
 	 * 				$mod = "100sq"
-	 * 			{Import-css.css}
-	 * 				$mod = "css.css"
-	 * 			{Import-some/path/to/a/file.css}
-	 * 				$mod = "some/path/to/a/file.css"
+	 * 			{Import file="css.css"}
+	 * 				$mod = " file=\"css.css\""
+	 * 			{Import file="some/path/to/a/file.css"}
+	 * 				$mod = " file=\"some/path/to/a/file.css\""
 	 * 
-	 * Naturally, $mod may NOT contain "}"
+	 * Naturally, $mod may NOT contain "}" if using the hyphen start
+	 * or a " if using the attribute assignment
 	 * @var mixed
 	 */
 	public $mod = '';
@@ -40,7 +41,7 @@ class ParseTag extends ParseBlock {
 	 * Custom function.
 	 * Syntax options parsed from the tag $mod
 	 * Implemented later to allow more flexibility in $mods.
-	 * Example: {SomeTag- @opt1=3482 @opt2=string}
+	 * Example: {SomeTag opt1="3482" opt2="string"}
 	 * @var Array: Associative
 	 */
 	public $options = array();
