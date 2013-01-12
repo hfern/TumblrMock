@@ -33,6 +33,10 @@ class TemplateParser {
 	const TAG_NAME = 2;
 	const TAG_MOD = 4;
 	
+	const RGX_META_BASE = '~\<meta((\s+[a-zA-Z0-9]+\=\"[^\"]+\")+)\s*\/\>~';
+	const META_B_FULL_STRING = 0;
+	const META_B_PARAMS_STRING = 1;
+	
 	const LOG_INFO = 1;
 	const LOG_WARNING = 2;
 	const LOG_ERROR = 3;
@@ -96,6 +100,17 @@ class TemplateParser {
 	 * @var int: enum(self::PAGE_TYPE_INDEX, self::PAGE_TYPE_PERMALINK)
 	 */
 	private $pagetype = 1;
+	
+	/**
+	 * When using meta tags, they will be stored here
+	 * Ex:
+	 * <meta name="color:Background" content="#eee"/>
+	 * "color:Background" => "#eee"
+	 * will be stored as
+	 * 
+	 * @var Array
+	 */
+	public $MetaOptions = array();
 	
 	public function ParseFile($filename) {
 		$this->ParseBlocks($filename);
@@ -252,6 +267,7 @@ class TemplateParser {
 	
 	/**
 	 * Parses only tags from text, returns array filled with /ParseBlock/s
+	 * aka ParseTags.
 	 * @param string $text (part of file)
 	 * @param int $pos_offset offset of character positions to add to node meta
 	 * @return Array[]ParseBlock
@@ -288,6 +304,7 @@ class TemplateParser {
 			$txt = substr($text, 0, $FirstMatch);
 			$txt = substr($txt, $LastOffset);
 			if ($txt != '') {
+				$this->ParseForMeta($txt, $LastOffset);
 				$text_n = new PassThru(PassThru::TAG_NAME);
 				$text_n->body = $txt;
 				$text_n_beg = $LastOffset+$pos_offset;
@@ -321,7 +338,73 @@ class TemplateParser {
 		
 		return $Nodes;
 	}
-	
+	/**
+	 * Parses only text for metas
+	 * @param string $text (part of file)
+	 * @param int $pos_offset offset of character positions to add to node meta
+	 * @return Array[]ParseBlock
+	 */
+	private function ParseForMeta($text, $pos_offset = 0) {
+		// nothing between nodes, no need for wasting cycles
+		if ($text == '') {
+			return array();
+		}
+		
+		$offset = 0;
+		$text_len = strlen($text);
+		$Nodes = array();
+		
+		while($offset < $text_len) {
+			$matched = preg_match(self::RGX_META_BASE, $text, $match, 0, $offset);
+			if (!$matched) {
+				break; // no further matches
+			}
+			$fulltext = $match[self::META_B_FULL_STRING];
+			$params = $match[self::META_B_PARAMS_STRING];
+			$match_at = strpos($text, $fulltext, $offset);
+			$szmatch = strlen($fulltext);
+			$match_end = $szmatch+$match_at;
+			
+			// extract text between last node (or start) and start
+			// of new, found node
+			$text_between = substr($text, $offset, $match_at-$offset);
+			// if text size > 0, no need to insert empty Text Nodes
+			if ($text_between) {
+				$text_n = new PassThru(PassThru::TAG_NAME);
+				$text_n->body = $text_between;
+				$text_n_beg = $offset+$pos_offset;
+				$text_n->meta->setBeginsAt($text_n_beg, $text_n_beg);
+				$text_n_end = $text_n_beg+strlen($text_between);
+				$text_n->meta->setEndsAt($text_n_end, $text_n_end);
+				$text_n->meta->setFileName($this->CurrentFile());
+				$Nodes[] = $text_n;
+			}
+			
+			$node = $this->NewTag("MetaTag", "", $params, $fulltext);
+			$beg_abs = $match_at+$pos_offset;
+			$node->meta->setBeginsAt($beg_abs, $beg_abs);
+			$end_abs = $beg_abs + strlen($fulltext);
+			$node->meta->setEndsAt($end_abs, $end_abs);
+			$Nodes[] = $node;
+			
+			$offset = $match_end;
+		}
+		
+		// text between end of last node and end of text?
+		$text_between = substr($text, $offset);
+		if ($text_between) {
+			$text_n = new PassThru(PassThru::TAG_NAME);
+			$text_n->body = $text_between;
+			$text_n_beg = $offset+$pos_offset;
+			$text_n->meta->setBeginsAt($text_n_beg, $text_n_beg);
+			$text_n_end = $text_n_beg+strlen($text_between);
+			$text_n->meta->setEndsAt($text_n_end, $text_n_end);
+			$text_n->meta->setFileName($this->CurrentFile());
+			$Nodes[] = $text_n;
+		}
+		
+		return $Nodes;
+	}
 	/**
 	 * Reduces full path of file to file-basepath for more readability
 	 * @param string $filename

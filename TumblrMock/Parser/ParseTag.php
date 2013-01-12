@@ -53,6 +53,7 @@ class ParseTag extends ParseBlock {
 	final public function InitTag(TemplateParser &$parser, $filter, $mod, $fulltagtext) {
 		$this->filter = $filter;
 		$this->mod = $mod;
+		$this->ParseOptions();
 		$this->fulltagtext = $fulltagtext;
 		$this->instantialize($parser);
 	}
@@ -76,5 +77,18 @@ class ParseTag extends ParseBlock {
 	
 	public function TagRender(Context &$ctx) {
 		return '';
+	}
+	
+	protected function ParseOptions() {
+		$rgx = '~\s*([a-zA-Z0-9]+)\=\"([^"]+)"~';
+		$matched = preg_match_all($rgx, $this->mod, $mat);
+		if($matched === 0) {
+			$this->options = array();
+			return; // no matches
+		}
+		for($i = 0; $i < $matched; $i++) {
+			$this->options[$mat[1][$i]] = $mat[2][$i];
+		}
+		return;
 	}
 }
